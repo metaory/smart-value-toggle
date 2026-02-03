@@ -1,6 +1,6 @@
 # value-cycle
 
-Cycle or increment/decrement values: with no selection, targets the value under the cursor or jumps to the first match on the line; with selection, operates on the selection. No default keybindings.
+Cycle or increment/decrement values on the current line: targets the value under the cursor or jumps to the first match. When you have text highlighted, operates on that range instead. No default keybindings.
 
 ## Rule types
 
@@ -34,7 +34,7 @@ No keybindings are contributed. Add in Keyboard Shortcuts (JSON):
 - **Increment**: `value-cycle.cycle` with `args: { "direction": "increment", "count": 1 }`
 - **Decrement**: `args: { "direction": "decrement", "count": 1 }`
 - **With count**: e.g. `"count": 5`
-- **Global** (all matches in selection): `args: { "direction": "increment", "global": true }`
+- **Global** (all matches in highlighted range): `args: { "direction": "increment", "global": true }`
 
 Example:
 
@@ -47,8 +47,8 @@ Example:
 
 ## Behavior
 
-- **No selection**: current line; target the match under the cursor, or the next match on the line. After edit, cursor moves to the start of the edited match only when you “jumped” to it (not when the match was under the cursor).
-- **Selection**: operate on the selection; with `global: true`, all rule matches in the selection are updated.
+- **Current line (no highlight)**: target the value under the cursor, or the first match on the line. After edit, cursor moves to the start of the edited match only when you “jumped” to it (not when the match was under the cursor).
+- **Highlighted text**: operate on the highlighted range; with `global: true`, all rule matches inside that range are updated.
 
 
 ## License
