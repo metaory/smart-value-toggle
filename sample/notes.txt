@@ -1,0 +1,4 @@
+Numbers: 0 10 99
+Booleans: true false
+Hex: #abc #ff0000
+Semver: 0.1.0

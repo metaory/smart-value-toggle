@@ -1,0 +1,77 @@
+{
+  "name": "value-cycle",
+  "displayName": "value-cycle",
+  "description": "Cycle or increment/decrement values: target under cursor or first match on line; or selection. No default keybindings.",
+  "version": "0.0.1",
+  "type": "module",
+  "publisher": "metaory",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "value-cycle",
+      "properties": {
+        "value-cycle.disabledTypes": {
+          "type": "array",
+          "default": [],
+          "description": "Rule types to disable. Types in this list are removed from the effective rules.",
+          "items": { "type": "string", "enum": ["boolean", "operatorPair", "quote", "nary", "fraction", "letters", "hexColor", "semver", "date", "datetime", "constants"] }
+        },
+        "value-cycle.rules": {
+          "type": "array",
+          "default": [
+            { "type": "boolean" },
+            { "type": "operatorPair", "options": { "pair": ["&&", "||"] } },
+            { "type": "quote" },
+            { "type": "nary", "options": { "base": 10 } },
+            { "type": "fraction", "options": {} },
+            { "type": "letters" },
+            { "type": "hexColor" },
+            { "type": "semver" }
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["nary", "fraction", "date", "datetime", "constants", "boolean", "operatorPair", "quote", "letters", "hexColor", "semver"]
+              },
+              "options": { "type": "object" },
+              "when": {
+                "type": "object",
+                "properties": {
+                  "languageId": { "type": "array", "items": { "type": "string" } },
+                  "visualOnly": { "type": "boolean" }
+                }
+              }
+            },
+            "required": ["type"]
+          }
+        }
+      }
+    },
+    "commands": [{
+      "command": "value-cycle.cycle",
+      "title": "Cycle value (increment/decrement)"
+    }]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.2",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
