@@ -50,6 +50,9 @@ Example:
 - **Current line (no highlight)**: target the value under the cursor, or the first match on the line. After edit, cursor moves to the start of the edited match only when you “jumped” to it (not when the match was under the cursor).
 - **Highlighted text**: operate on the highlighted range; with `global: true`, all rule matches inside that range are updated.
 
+## Acknowledgement
+
+Inspired by [dial.nvim](https://github.com/monaqa/dial.nvim). Neovim had it; we missed it in VS Code, so here it is.
 
 ## License
 [MIT](LICENSE)
