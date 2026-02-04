@@ -6,7 +6,7 @@ const opt = (r, key, def) => r?.options?.[key] ?? def;
 
 const base = (r) => Math.min(36, Math.max(2, Number(opt(r, 'base', 10))));
 const nary = {
-  pattern: (r) => (base(r) <= 10 ? '[0-9]+' : `[0-9a-${String.fromCharCode(86 + base(r))}]+`),
+  pattern: (r) => (base(r) <= 10 ? '(?<![-.])\\d+(?!\\.\\d)' : `[0-9a-${String.fromCharCode(86 + base(r))}]+`),
   match: (t, r) => /^[0-9a-z]+$/i.test(T(t)) && !Number.isNaN(parseInt(T(t), base(r))),
   step: (t, delta, r) => { const n = parseInt(T(t), base(r)); return Number.isNaN(n) ? t : (n + delta).toString(base(r)); }
 };
@@ -14,7 +14,17 @@ const nary = {
 const fraction = {
   pattern: /-?\d*\.?\d+/,
   match: (t) => /^-?\d*\.?\d+$/.test(T(t)),
-  step: (t, delta, r) => { const n = Number(T(t)); return Number.isNaN(n) ? t : String(n + delta * Number(opt(r, 'step', 1))); }
+  step: (t, delta, r) => {
+    const s = T(t);
+    const n = Number(s);
+    if (Number.isNaN(n)) return t;
+    const explicitStep = opt(r, 'step');
+    const decimals = (s.split('.')[1] || '').length;
+    const step = explicitStep !== undefined ? Number(explicitStep) : (decimals ? 10 ** -decimals : 1);
+    const next = n + delta * step;
+    const rounded = decimals ? Math.round(next * 10 ** decimals) / 10 ** decimals : Math.round(next);
+    return decimals ? rounded.toFixed(decimals) : String(rounded);
+  }
 };
 
 const pair = (r) => opt(r, 'pair', []);
@@ -63,12 +73,6 @@ const semver = {
   }
 };
 
-const dateUnit = (d, amount, u) => ({ day: () => d.setDate(d.getDate() + amount), minute: () => d.setMinutes(d.getMinutes() + amount), hour: () => d.setHours(d.getHours() + amount) }[u]?.() ?? d.setDate(d.getDate() + amount));
-const dateStep = (t, amount, unit) => {
-  const d = new Date(T(t));
-  return Number.isNaN(d.getTime()) ? t : (dateUnit(d, amount, unit), d.toISOString().slice(0, 16).replace('T', ' '));
-};
-
 const quotePattern = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/;
 const quote = {
   pattern: quotePattern,
@@ -105,17 +109,7 @@ const HANDLERS = {
     match: (t) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(T(t)),
     step: (t, delta) => hex(t, delta)
   },
-  semver: { ...semver },
-  date: {
-    pattern: /\d{4}-\d{2}-\d{2}/,
-    match: (t) => !Number.isNaN(Date.parse(T(t))),
-    step: (t, amount) => dateStep(t, amount, 'day')
-  },
-  datetime: {
-    pattern: /\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}/,
-    match: (t) => !Number.isNaN(Date.parse(T(t))),
-    step: (t, amount, r) => dateStep(t, amount, opt(r, 'unit', 'minute'))
-  }
+  semver: { ...semver }
 };
 
 const ruleApplies = (r, ctx) =>
@@ -143,6 +137,16 @@ const patternSource = (rule) => {
   return raw && (typeof raw === 'string' ? raw : raw.source);
 };
 
+const preferQuoteOverLetters = (a, b, rules) => {
+  const aType = rules[a.i]?.type;
+  const bType = rules[b.i]?.type;
+  const aContainsB = a.index <= b.index && b.index + b.len <= a.index + a.len;
+  const bContainsA = b.index <= a.index && a.index + a.len <= b.index + b.len;
+  if (aContainsB && aType === 'quote' && bType === 'letters') return -1;
+  if (bContainsA && bType === 'quote' && aType === 'letters') return 1;
+  return 0;
+};
+
 const matchContainingCursor = (lineText, lineRange, cursor, rules) => {
   const off = cursor.character - lineRange.start.character;
   const hits = rules.flatMap((rule, i) => {
@@ -153,7 +157,7 @@ const matchContainingCursor = (lineText, lineRange, cursor, rules) => {
       .map(m => ({ index: m.index, len: m[0].length, i }));
   });
   if (!hits.length) return null;
-  hits.sort((a, b) => a.index - b.index || a.i - b.i);
+  hits.sort((a, b) => preferQuoteOverLetters(a, b, rules) || (a.index === b.index ? b.len - a.len : a.len - b.len) || a.i - b.i);
   const { index, len } = hits[0];
   const start = lineRange.start.translate(0, index);
   return new vscode.Range(start, start.translate(0, len));
@@ -168,19 +172,23 @@ const firstMatchAfter = (lineText, lineRange, cursor, rules) => {
     return first ? [{ index: first.index, len: first[0].length, i }] : [];
   });
   if (!hits.length) return null;
-  hits.sort((a, b) => a.index - b.index || a.i - b.i);
+  hits.sort((a, b) => preferQuoteOverLetters(a, b, rules) || (a.index === b.index ? b.len - a.len : a.len - b.len) || a.index - b.index || a.i - b.i);
   const { index, len } = hits[0];
   const start = lineRange.start.translate(0, index);
   return new vscode.Range(start, start.translate(0, len));
 };
 
 const matchesInLine = (lineText, lineRange, rules, sel) => {
-  const sources = rules.map(patternSource).filter(Boolean);
-  if (!sources.length) return [];
-  const re = new RegExp(sources.map(s => `(${s})`).join('|'), 'g');
+  const allHits = rules.flatMap((rule, i) => {
+    const src = patternSource(rule);
+    if (!src) return [];
+    return [...lineText.matchAll(new RegExp(src, 'g'))].map(m => ({ index: m.index, len: m[0].length }));
+  });
+  const innerOnly = allHits.filter(h => !allHits.some(o => o.index <= h.index && h.index + h.len <= o.index + o.len && o.len > h.len));
   const selR = new vscode.Range(sel.start, sel.end);
-  return [...lineText.matchAll(re)]
-    .map(m => new vscode.Range(lineRange.start.translate(0, m.index), lineRange.start.translate(0, m.index + m[0].length)))
+  return [...new Map(innerOnly.map(h => [`${h.index},${h.len}`, h])).values()]
+    .sort((a, b) => a.index - b.index)
+    .map(h => new vscode.Range(lineRange.start.translate(0, h.index), lineRange.start.translate(0, h.index + h.len)))
     .filter(r => r.intersection(selR));
 };
 

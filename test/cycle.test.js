@@ -54,6 +54,13 @@ suite('cycle', () => {
       assert.strictEqual(transform(match, '42', 'decrement', 1), '41');
       assert.strictEqual(transform(match, '42', 'increment', 5), '47');
     });
+    test('fraction inferred step by decimal places', () => {
+      const match = { rule: {}, type: 'fraction' };
+      assert.strictEqual(transform(match, '2.3', 'increment', 1), '2.4');
+      assert.strictEqual(transform(match, '2.35', 'increment', 1), '2.36');
+      assert.strictEqual(transform(match, '2.355', 'increment', 1), '2.356');
+      assert.strictEqual(transform(match, '42', 'increment', 1), '43');
+    });
     test('quote toggles', () => {
       const match = { rule: {}, type: 'quote' };
       assert.strictEqual(transform(match, '"a"', 'increment', 1), "'a'");

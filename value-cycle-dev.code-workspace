@@ -1,5 +1,9 @@
 {
   "folders": [
     { "name": "Sample", "path": "sample" }
-  ]
+  ],
+  "settings": {
+    "window.titleBarStyle": "custom",
+    "window.menuBar.visibility": "hidden"
+  }
 }

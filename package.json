@@ -1,16 +1,35 @@
 {
   "name": "value-cycle",
   "displayName": "value-cycle",
-  "description": "Cycle or increment/decrement values: target under cursor or first match on line; or selection. No default keybindings.",
+  "description": "Cycle or nudge values on the line (at cursor or first match) or in the selection. No default keybindings.",
   "version": "0.0.1",
   "type": "module",
   "publisher": "metaory",
+  "icon": ".github/assets/logo.png",
   "engines": {
     "vscode": "^1.105.0"
   },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "cycle",
+    "increment",
+    "decrement",
+    "dial",
+    "toggle",
+    "value",
+    "number",
+    "boolean",
+    "quote",
+    "hex",
+    "semver"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metaory/smart-value-toggle"
+  },
+  "license": "MIT",
   "main": "./extension.js",
   "contributes": {
     "configuration": {
@@ -20,19 +39,19 @@
           "type": "array",
           "default": [],
           "description": "Rule types to disable. Types in this list are removed from the effective rules.",
-          "items": { "type": "string", "enum": ["boolean", "operatorPair", "quote", "nary", "fraction", "letters", "hexColor", "semver", "date", "datetime", "constants"] }
+          "items": { "type": "string", "enum": ["boolean", "operatorPair", "quote", "nary", "fraction", "letters", "hexColor", "semver", "constants"] }
         },
         "value-cycle.rules": {
           "type": "array",
           "default": [
             { "type": "boolean" },
             { "type": "operatorPair", "options": { "pair": ["&&", "||"] } },
-            { "type": "quote" },
             { "type": "nary", "options": { "base": 10 } },
             { "type": "fraction", "options": {} },
             { "type": "letters" },
             { "type": "hexColor" },
-            { "type": "semver" }
+            { "type": "semver" },
+            { "type": "quote" }
           ],
           "items": {
             "type": "object",
@@ -40,7 +59,7 @@
               "id": { "type": "string" },
               "type": {
                 "type": "string",
-                "enum": ["nary", "fraction", "date", "datetime", "constants", "boolean", "operatorPair", "quote", "letters", "hexColor", "semver"]
+                "enum": ["nary", "fraction", "constants", "boolean", "operatorPair", "quote", "letters", "hexColor", "semver"]
               },
               "options": { "type": "object" },
               "when": {

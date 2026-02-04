@@ -1,7 +1,7 @@
 <div align="center">
   <img src=".github/assets/logo.png" width="128" height="128" alt="logo">
   <h1>value-cycle</h1>
-  <img src=".github/assets/demo.gif" alt="demo">
+  <img src=".github/assets/screencast.gif" alt="demo">
 </div>
 
 Cycle or nudge values on the line (at cursor or first match) or in the selection. No default keybindings.
@@ -14,22 +14,20 @@ Rules are tried in order; the first matching type wins.
 |------|--------------|---------|
 | boolean | `false` ⇄ `true` | — |
 | operatorPair | Toggle between two strings | `pair: [string, string]` e.g. `["&&", "\|\|"]` |
-| quote | Toggle `'…'` ⇄ `"…"` (escape/unescape inner) | — |
 | nary | Integers in base 2–36 | `base` (default 10) |
-| fraction | Decimal numbers | `step` (default 1) |
+| fraction | Decimal numbers | `step` (optional; inferred from decimal places if omitted: 0.1, 0.01, …) |
 | letters | Single letter a–z / A–Z | — |
 | hexColor | `#rgb` or `#rrggbb` | — |
 | semver | `x.y.z` bump segment | `segment`: `"major"` \| `"minor"` \| `"patch"` |
-| date | ISO date, ± days | — |
-| datetime | Date + time, ± unit | `unit`: `"day"` \| `"minute"` \| `"hour"` |
+| quote | Toggle `'…'` ⇄ `"…"` (escape/unescape inner) | — |
 | constants | Cycle through a list | `list: string[]` |
 
-Default `value-cycle.rules` order: boolean → operatorPair → quote → nary → fraction → letters → hexColor → semver (date, datetime, constants are available but not in the default list).
+Default `value-cycle.rules` order: boolean → operatorPair → nary → fraction → letters → hexColor → semver → quote (constants available but not in the default list).
 
 ## Settings
 
 - **value-cycle.rules** – Array of `{ type, options?, when?: { languageId?, visualOnly? } }`. Defines which types are active and in what order.
-- **value-cycle.disabledTypes** – Array of type names to disable (e.g. `["date", "datetime"]`). Types in this list are removed from the effective rules. Lets you turn off a type without editing the full rules array.
+- **value-cycle.disabledTypes** – Array of type names to disable (e.g. `["constants"]`). Types in this list are removed from the effective rules. Lets you turn off a type without editing the full rules array.
 
 ## Keybindings
 
@@ -51,8 +49,8 @@ Example:
 
 ## Behavior
 
-- **Current line (no highlight)**: target the value under the cursor, or the first match on the line. After edit, cursor moves to the start of the edited match only when you “jumped” to it (not when the match was under the cursor).
-- **Highlighted text**: operate on the highlighted range; with `global: true`, all rule matches inside that range are updated.
+- **Current line (no highlight)**: target the value under the cursor, or the first match on the line. When multiple matches overlap (e.g. `"true"`), the innermost match wins so the inner type (boolean, nary, etc.) applies. After edit, cursor moves to the start of the edited match only when you “jumped” to it (not when the match was under the cursor).
+- **Highlighted text**: operate on the highlighted range; with `global: true`, all rule matches inside that range are updated (innermost matches only when overlapping).
 
 ## Acknowledgement
 
