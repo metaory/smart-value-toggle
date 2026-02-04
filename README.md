@@ -1,6 +1,10 @@
-# value-cycle
+<div align="center">
+  <img src=".github/assets/logo.png" width="128" height="128" alt="logo">
+  <h1>value-cycle</h1>
+  <img src=".github/assets/demo.gif" alt="demo">
+</div>
 
-Cycle or increment/decrement values on the current line: targets the value under the cursor or jumps to the first match. When you have text highlighted, operates on that range instead. No default keybindings.
+Cycle or nudge values on the line (at cursor or first match) or in the selection. No default keybindings.
 
 ## Rule types
 
